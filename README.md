@@ -1,9 +1,31 @@
-**Music Mind**
+# Music Preference Neural Network
 
-***A neural network to predict music preference based on the M.U.S.I.C emotional assessment and age***
+A feedforward neural network (pure NumPy) that predicts preference across the
+five MUSIC dimensions (mellow, unpretentious, sophisticated, intense,
+contemporary) from age, empathy (EQ), and systemizing (SQ).
 
+## Run
 
-MusicMind is a full-stack music psychology application I built after writing a literature review paper on the dimensionality of music preferences (https://osf.io/preprints/osf/qnsmz_v1), in which I synthesized research from Greenberg et al. (2015), Hargreaves (2017), and Thomas (2016) to argue that music preference must be studied along two dimensions simultaneously: cognitive type (EQ vs. SQ) and developmental age, a gap I identified in the existing literature. To operationalize that argument in code, I trained a feedforward neural network in PyTorch with the architecture 7 input features to 64 to 32 to 16 to 5 output neurons, where the inputs are a user's Empathy Quotient, Systemizing Quotient, self-perception scores, and age, and the outputs are their predicted affinity scores across the five M.U.S.I.C. dimensions (Mellow, Unpretentious, Sophisticated, Intense, Contemporary). The hidden layers use ReLU activation to prevent the vanishing gradient problem that sigmoid causes in deep networks, the output layer uses Sigmoid to constrain scores to a valid 0 to 1 range, and Dropout (p=0.2) randomly zeros 20% of neurons during training to prevent overfitting by forcing the network to learn redundant representations. I trained the model using Mean Squared Error loss, appropriate for continuous score prediction rather than classification, with the Adam optimizer at a learning rate of 0.001, which extends plain gradient descent by maintaining a momentum term and an adaptive per-weight velocity term, enabling faster, more stable convergence than vanilla SGD. Over 300 epochs with mini-batches of 64 examples, PyTorch's automatic differentiation applies the chain rule backwards through all four layers on each step, computing the partial derivative of the loss with respect to all 3,205 trainable weights and nudging each one in the direction that reduces prediction error, reaching a final validation MSE of approximately 0.015. The training data is synthetically generated from the empirical relationships in the source papers and will be replaced with real survey responses as data collection completes. The full application is served through a Flask backend with a single-page HTML/CSS/JS frontend where users take the survey and receive their profile, genre recommendations, cognitive type classification, and placement on Hargreaves' open-earedness age curve.
+```
+pip install -r requirements.txt
+python neural_net.py
+```
 
+## Data
 
-*****Siddharth Kulkarni*****
+`data.tsv` holds survey responses: the five music ratings (1-5), three EQ
+items, three SQ items, and age. EQ and SQ are averaged into composite scores;
+all inputs are scaled to 0-1.
+
+## Model
+
+Layers 3 -> 32 -> 16 -> 5, ReLU hidden activations, sigmoid output, Adam
+optimizer, MSE loss. Backpropagation is implemented by hand. Evaluated with
+5-fold cross-validation against a predict-the-mean baseline.
+
+## Results (n=125)
+
+Within 1 point: ~56%. Mean absolute error: ~1.0 point. The model does not beat
+the mean baseline out of sample at this sample size, which is expected: the
+sample is small and skews young. The pipeline is built to run unchanged on a
+larger dataset.
